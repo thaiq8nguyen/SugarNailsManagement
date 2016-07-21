@@ -135,7 +135,7 @@ $(document).on('pagecreate pageshow', '#redeem-certificate',function(){
 $(document).on('pagebeforehide','#redeem-certificate',function(){
     resetRedeem();
 });
-
+/*START PAGE: CERTIFICATE-BALANCE.PHP**********************************************************************************/
 $(document).on("pagecreate pageshow", "#certificate-balance",function(){
     var $balanceLookUpForm = $('#balance-lookup');
     var $balanceMsg = $('#show-balance');
@@ -173,7 +173,7 @@ $(document).on("pagecreate pageshow", "#certificate-balance",function(){
 $(document).on('pagebeforehide','#certificate-balance',function(){
     resetBalance();
 });
-
+/*END PAGE: CERTIFICATE-BALANCE.PHP**********************************************************************************/
 /*BEGIN FUNCTION validateSubmission()**********************************************************************************/
 function validateSaleData(){
     var isValid;
