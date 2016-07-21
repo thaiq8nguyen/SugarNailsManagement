@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="785e19cc-edf5-482f-912d-9cd219685f15" name="SugarNails Management (project level)" url="http://management.sugarnailspa.com">
+        <fileTransfer host="resonancecorp.com" port="21" password="df99dfd2dfc9dfc7df9adfdcdfc3dfdcdfc7dfcf" username="sugarnails-management@resonancecorp.com">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" />
+          </advancedOptions>
+          <option name="port" value="21" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

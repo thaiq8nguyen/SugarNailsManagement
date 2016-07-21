@@ -1,0 +1,38 @@
+<table class = "table table-striped table-bordered service-table">
+    <thead>
+    <tr>
+        <th scope = "col">Action</th>
+        <th scope = "col">Service</th>
+        <th scope = "col">Sale</th>
+        <th scope = "col">Tip</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td class = "col-md-2">
+            <button type = "button" class = "btn btn-info add-sale">
+                <span class = "glyphicon glyphicon-plus"></span>
+            </button>
+            <button type = "button" class = "btn btn-warning remove-sale">
+                <span class = "glyphicon glyphicon-remove"></span>
+            </button>
+        </td>
+
+        <td class = "col-md-3"><select class = "form-control service-name" name = serviceName[]>
+        </select></td>
+        <td class = "col-md-3">
+            <div class = "input-group">
+                <div class = "input-group-addon">$</div>
+                <input type = "text" class = "form-control service-sale" name = "serviceSale[]">
+            </div>
+        </td>
+        <td class = "col-md-3">
+            <div class = "input-group">
+                <div class = "input-group-addon">$</div>
+                <input type = "text" class = "form-control tip service-tip" name = "serviceTip[]">
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
