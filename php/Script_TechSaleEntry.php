@@ -9,7 +9,7 @@
         $sale = $_POST['sale'];
         $cctip = $_POST['cctip'];
         $saleDate = $_POST['saleDate'];
-
+        $response = "";
 
         mysqli_autocommit($link,false);
         $isValid = true;
@@ -30,16 +30,28 @@
                 $isValid = false;
             }
         }
-
         if($isValid){
             mysqli_commit($link);
-            $response = "success";
+            $response = array("status" => "success", "techName" => GetTechDetail($techID), "sale" => $sale,
+                "cctip" => $cctip);
         }
         else{
             mysqli_rollback($link);
-            $response = "failure";
+            $response = array("status" => "failure");
         }
     }
 
-    #print_r($response);
-    echo ($response);
+    //print_r($response);
+    echo json_encode($response);
+
+    function GetTechDetail($techID){
+        $link = $GLOBALS['link'];
+
+        $selectTech =  mysqli_query($link,"SELECT * FROM technicians WHERE technicianID = " .$techID);
+        $techDetail = mysqli_fetch_assoc($selectTech);
+
+        $name = $techDetail['firstName'] . " " . $techDetail['lastName'];
+
+        return $name;
+
+    }

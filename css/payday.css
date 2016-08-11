@@ -4,3 +4,23 @@
 #pay-period-select{
     width:50%;
 }
+.btn{
+    margin-right:5px !important;
+}
+.single-container{
+    width: 24%;
+    margin: 5px;
+    display: inline-block;
+}
+
+/*Wage Modal*/
+.payment-group{
+    margin-right:10px !important;
+    width:100px !important;
+}
+.payment-amount{
+    width:95px !important;
+}
+.payment-reference{
+    width:100px !important;
+}

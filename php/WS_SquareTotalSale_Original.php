@@ -25,13 +25,14 @@
             'Accept' => 'application/json',
             'Content-Type' => 'application/json'
         );
-        $beginDate = $_GET['saleDate'];
+        $beginDate = "2016-08-01"; //$_GET['saleDate'];
         $date = new DateTime($beginDate);
         $date->modify('+1 day');
         $endDate = $date->format('Y-m-d');
 
         $payments = getTodayPayment(getLocationIds(),$beginDate,$endDate);
-        echo json_encode(getTodaySale($payments));
+        print_r($payments);
+        //echo json_encode(getTodaySale($payments));
 
 
         # Helper function to convert cent-based money amounts to dollars and cents
@@ -40,17 +41,17 @@
         }
         # Obtains all of the business's location IDs. Each location has its own collection of payments.
         function getLocationIds() {
-            $locationID = "";
+            //$locationID = "";
             global $accessToken, $connectHost, $requestHeaders;
             $requestPath = $connectHost . '/v1/me/locations';
             $response = Unirest\Request::get($requestPath, $requestHeaders);
             $locations = $response->body;
-
+            /*
             foreach ($locations as $location) {
                 $locationID = $location->id;
             }
-
-            return $locationID;
+            */
+            return $locations[0]->id;
 
         }
 
@@ -95,6 +96,7 @@
                 }
             }
 
+
             # Remove potential duplicate values from the list of payments
             $seenPaymentIds = array();
             $uniquePayments = array();
@@ -105,7 +107,8 @@
                 $seenPaymentIds[$payment->id] = true;
                 array_push($uniquePayments, $payment);
             }
-            return $uniquePayments;
+
+            return $payments;
         }
 
         function getTodaySale($payments){

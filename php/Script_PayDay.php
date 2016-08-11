@@ -1,78 +1,88 @@
 <?php
-    require_once ("Connection.php");
-
-    date_default_timezone_set('America/Los Angeles');
-
-    $json = '[{"techID":"5",
-    "payment":[
-                {"amount":"10","reference":"check # 101"},
-                {"amount:"7","reference":"cash"}
-                ]},
-    {"techID":"10",
-    "payment":[
-               {"amount":"28","reference":"check # 102"},
-               {"amount":"","reference":""}
-               ]
-    }]';
-    $jsonTwo = '[{
-                   "techid": "5",
-                   "payments":[
-                               {"amount":"9.5","reference":"102"},
-                               {"amount":"10","reference":"103"}
-                             ]
-                }]';
+    require "Connection.php";
 
 
+    $payment = $_POST["payment"];
+    $payPeriod = $_POST["payPeriod"];
 
-    //$json = $_POST["payment"];
-    //$startPeriod = "2016-04-18";$_POST['startPeriod'];
-    //$endPeriod = "2016-04-19"; $_POST['endPeriod'];
-    //$payPeriod = $startPeriod . " - " . $endPeriod;
-
-    $pay = json_decode($jsonTwo, true);
-
-    foreach($pay as $data){
-        echo($data["techid"] . "<br>");
-        foreach($data["payments"] as $payment ){
-            echo($payment["amount"]);
-        }
-    }
-
-    /*
-    $numPayment = count($pay);
-    $numInsert = 0;
+    $isValid = false;
+    $response = "";
 
 
-    foreach($pay as $key=>$data) {
-        echo($data);
+    mysqli_autocommit($link,false);
 
-        $query = "INSERT INTO payments(paymentTypeID,recipientID,payPeriod,paydate) " .
-            "VALUES(1," . $data["techID"] . ",'" . $payPeriod . "','" .
-            date("Y-m-d")."')";
-        $paymentResult = mysqli_query($link,$query);
-        if(mysqli_query($link, $query)){
-            $paymentID = mysqli_insert_id($link);
-            $payments = $data["payment"];
-            foreach($payments as $paymentKey=>$paymentData){
-                $paymentQuery = "INSERT INTO paymentsdetail(paymentID,paymentAmount,paymentRef) ".
-                    "VALUES(" . $paymentID .",'" . $paymentData["amount"] . "','" .
-                    $paymentData["reference"] . "')";
-                mysqli_query($link,$query);
+    $pay = json_decode($payment, true);
+
+    //Looping through each technician ID
+    foreach($pay as $pays){
+        $totalPayment = 0;
+        $balance = 0;
+        $techID = $pays["techID"];
+        $wage = $pays["wage"];
+        $makePayment = "INSERT INTO payments(paymentTypeID,recipientID,payPeriod,paydate) " .
+            "VALUES(1," . $techID . ",'" . $payPeriod . "','" . date("Y-m-d")."')";
+            $result = mysqli_query($link,$makePayment);
+            if($result){
+                $isValid = true;
+                $paymentID = mysqli_insert_id($link);
+                mysqli_commit($link);
+
+                //Looping through each payment in each technician ID
+
+                foreach($pays["payments"] as $paysDetail ){
+                    $amount = $paysDetail["paymentAmount"];
+                    $method = $paysDetail["paymentMethod"];
+                    $reference = $paysDetail["paymentReference"];
+                    $makePaymentDetail = "INSERT INTO paymentsdetail(paymentID,paymentMethodID,paymentAmount,paymentRef) ".
+                        "VALUES(" . $paymentID . "," . $method . ",'" . $amount . "','" . $reference . "')";
+                    $result = mysqli_query($link,$makePaymentDetail);
+                    if($result){
+                        mysqli_commit($link);
+
+                    }
+                    else{
+                        mysqli_rollback($link);
+                        $response = array("status" => "failure", "msg" => "Make payment detail error",
+                            "error" => mysqli_error($link));
+                    }
+
+                    $totalPayment = $totalPayment + $amount;
+
+
+                    $balance = $wage - $totalPayment;
+
+                }
+
+
+                $updateAccount = "INSERT INTO techaccount(techID,paymentID,salePeriod,wage,balance) " .
+                "VALUES(" . $techID ."," . $paymentID . ",'" . $payPeriod . "'," . $wage . "," . $balance . ") ";
+                $result = mysqli_query($link,$updateAccount);
+
+                if($result){
+                    $isValid = true;
+                    mysqli_commit($link);
+                    $response = array("status" => "success");
+                }
+                else{
+                    mysqli_rollback($link);
+                    $response = array("status" => "failure", "msg" => "Account update error ", "error" => mysqli_error($link));
+                }
             }
 
-        };
-        if($paymentResult){
-            $numInsert += 1;
-        }
 
+            else{
+                mysqli_rollback($link);
+                $isValid = false;
+                $response = array("status" => "failure", "msg" => "Make payment error", "error" => mysqli_error($link));
+            }
     }
-    if($numInsert == $numPayment){
-        echo "success";
-    }
-    else{
-        echo "failure";
-    }
-        */
+
+
+    echo(json_encode($response));
+
+
+
+
 
 
 

@@ -5,7 +5,7 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button"
                aria-haspopup="true" aria-expanded="false">Sale<span class="caret"></span></a>
             <ul class = "dropdown-menu">
-                <li><a href = "/technicians/techsaleentry.php"> Tech Sale Entry</a></li>
+                <li><a href = "/technicians/tech-sale-entry.php"> Tech Sale Entry</a></li>
             </ul>
         </li>
         <li><a href = "#">Gift</a></li>

@@ -1,11 +1,9 @@
     <footer>
-        <div class = "container">
-            <div class = "row">
-                <div class = "col-md-3">
-                    <p>Copyrighted by Management <?php echo date("Y"); ?></p>
+            <nav class = "nav navbar-default" style = "text-align: center;">
+                <div class = "container">
+                    <p>Developed by Thai Nguyen. Copyrighted by Resonance Corporation <?php echo date("Y"); ?></p>
                 </div>
-            </div>
-        </div>
+            </nav>
     </footer>
     </div><!--End of wrapper-->
 </body>

@@ -28,18 +28,20 @@
         <div class = "container">
             <ul class = "nav navbar-nav">
                 <li><a href = "../home.php">Home</a></li>
-                <li><a href = "../management/sale.php">Sale</a></li>
-                <li><a href = "#">Gift Certificate</a></li>
+                <!--<li><a href = "../management/sale.php">Sale</a></li>-->
+                <!--<li><a href = "#">Gift Certificate</a></li>-->
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle = "dropdown" role="button"
                        aria-haspopup="true" aria-expanded="false">Technician <span class="caret"></span></a>
                     <ul class="dropdown-menu">
-                        <li><a href="../technicians/techsaleentry.php">Daily Sale Entry</a></li>
-                        <li><a href="#">Ledger</a></li>
+                        <li><a href="../technicians/tech-sale-entry.php">Daily Sale Entry</a></li>
                     </ul>
 
                 </li>
                 <li><a href = "../technicians/payday.php">Pay Day</a></li>
+            </ul>
+            <ul class = "nav navbar-nav navbar-right">
+                <li><a class = "pull-right" href = "../signout.php">Sign Out</a></li>
             </ul>
         </div>
     </nav>

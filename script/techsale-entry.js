@@ -75,35 +75,37 @@ $(document).ready(function(){
                 '<input type = "hidden" name = "saleID" id = "saleID" value = "' + response.saleID  + '">' +
                 '<input type = "hidden" name = "saleDate" id = "saleDate" value = "' + $datepicker.val() + '">' +
                 '</div>' +
-                '<button type = "button" id = "submit-btn" class = "btn btn-primary">Submit</button>' +
+                '<button type = "button" id = "add-sale-btn" class = "btn btn-primary">Add Sale</button>' +
                 '</div>' +
                 '</div>' +
                 '</form>';
             $formContainer.empty().append($saleEntry);
             $formContainer.show();
             $summaryContainer.show();
-            UpdateTechSaleSummary(techID,$datepicker.val())
+            UpdateTechSaleSummary(techID,techName,$datepicker.val())
         });
     });
-    $(document).on('click','#submit-btn',function(){
+    $(document).on('click','#add-sale-btn',function(){
         var $confirmation = '';
 
         EntryValidation();
 
-        if($('#saleID').val() == 'nosale'){
+        if($('#saleID').val() === 'nosale'){
             $.ajax({
                 type: 'post',
                 url:'../php/Script_TechSaleEntry.php',
                 data: $('#sale-entry-form').serializeArray(),
-                dataType: 'text'
+                dataType: 'json'
             }).done(function(response){
-                if(response == 'success'){
+                console.log(response);
+                if(response.status == 'success'){
                     $confirmation = '<div class = "panel panel-success">' +
                         '<div class = "panel-heading">' +
                         '<h3 class = "panel-title">Success</h3>' +
                         '</div>' +
                         '<div class = "panel-body">' +
-                        '<p>Technician sale has been entered.</p>' +
+                        '<p>' + response.techName + ' makes $' + response.sale + ' in sale and $'
+                        + response.cctip + ' in credit card tip </p>' +
                         '</div>' +
                         '</div>';
                 }
@@ -200,12 +202,12 @@ $(document).ready(function(){
             $('#total-tip').text('$ ' + sale.grossTip);
         });
     }
-    function UpdateTechSaleSummary($techID,$saleDate){
+    function UpdateTechSaleSummary(techID,techName,saleDate){
         var $saleSummary = '';
         $.ajax({
             type: 'get',
             url: '../php/Script_GetIndividualTechSale.php',
-            data:{techID: $techID , saleDate:$saleDate},
+            data:{techID: techID , saleDate:saleDate},
             dataType: 'json'
         }).done(function(response){
         console.log(response);
@@ -223,7 +225,7 @@ $(document).ready(function(){
 
             $saleSummary = '<div class = "panel panel-primary">' +
                 '<div class = "panel-heading">' +
-                '<h3 class = "panel-title">Sale Summary</h3>' +
+                '<h3 class = "panel-title">' + techName + '\'s Summary</h3>' +
                 '</div>' +
                 '<div class = "panel-body">'+
                 '<div class = "row">' +

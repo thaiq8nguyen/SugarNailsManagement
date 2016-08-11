@@ -10,7 +10,9 @@ $(document).ready(function(){
         if(validation()){
 
             $.post('/php/UserAuthentication.php',$signin.serializeArray(),function(response){
-                if(response == 'pass'){
+                console.log(response);
+                if(response === 'pass'){
+
                     window.location.href = 'home.php';
                 }
                 else{

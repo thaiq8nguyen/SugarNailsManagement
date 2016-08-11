@@ -1,4 +1,14 @@
 <?php
+    session_start();
+    if(!isset($_SESSION['userID'])){
+        header('Location: index.html');
+    die();
+    }
+    else{
+        $header = file_get_contents('../header.html');
+        $header = str_replace('%username%',$_SESSION['username'],$header);
+
+    }
     $pageTitle = "Pay Day";
     $pageScript = "../script/payday.js";
     $pageCSS = "../css/payday.css"
@@ -22,32 +32,40 @@
         </div>
     </div>
     <div class = "row top-buffer">
-        <div class = "col-md-12">
-            <table id = "earning-table" class = "table table-striped table-hover">
-                <thead>
-                <tr>
-                    <th></th>
-                    <th>Pay</th>
-                    <th>Technician</th>
-                    <th>Gross Sale</th>
-                    <th>Gross Tip</th>
-                    <th>Sale Earning</th>
-                    <th>Tip Earning</th>
-                    <th>Total Earning</th>
-                    <th>Check Amount</th>
-                    <th>Check #</th>
-                    <th>Other Payment</th>
-                </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-
-        </div>
-        <div class = "col-md-4 col-md-offset-10">
-            <button type = "button" id = "submit-pay" class = "btn btn-primary">Pay</button>
+        <div class = "col-md-12" id = "group-wage-container">
         </div>
     </div>
+
 </div>
+    <div class = "modal fade" id = "pay-modal" tabindex = "-1" role = "dialog">
+        <div class = "modal-dialog modal-lg" role = "document">
+
+            <div class = "modal-content">
+                <div class = "modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span></button>
+                    <div class = "modal-title pay-modal-title"><h3></h3></div>
+                </div>
+                <div class = "modal-body pay-modal-body">
+
+                        <div class = "row">
+                            <div class = "col-md-4">
+                                <div id = "daily-sale-table-container"></div>
+                            </div>
+                            <div class = "col-md-8">
+                                <div id = "wage-panel-container"></div>
+                                <div id = "payment-panel-container"></div>
+                            </div>
+                        </div>
+
+                </div>
+                <div class = "modal-footer pay-modal-footer">
+                    <button type="button" class="btn btn-primary make-payment-btn">Pay</button>
+                </div><!-- pay-modal-footer-->
+            </div><!-- modal-content-->
+        </div><!-- modal-dialog-->
+    </div><!-- modal-->
+
 <?php include("../inc/footer.php");
 
 

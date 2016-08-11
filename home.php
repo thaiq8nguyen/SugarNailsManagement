@@ -1,5 +1,5 @@
 <?php
-    /*
+
     session_start();
     if(!isset($_SESSION['userID'])){
         header('Location: index.html');
@@ -9,13 +9,13 @@
         $header = file_get_contents('header.html');
         $header = str_replace('%username%',$_SESSION['username'],$header);
     }
-    */
+
     $pageTitle = "Home";
     $pageCSS = "../css/home.css";
     $pageScript = "test";
 ?>
     <?php include('inc/header.php');?>
-    <div class = "container">
+    <div class = "container top-buffer">
         <div class = "row">
             <div class = "col-md-8">
                 <div class = "panel panel-default">
