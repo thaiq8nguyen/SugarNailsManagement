@@ -56,7 +56,7 @@
                 </div>
             </div>
         </div>
-        <div class = "row">
+        <div class = "row sub-sale-entry-container">
             <div class = "col-md-4" id = "tech-list"></div>
             <div class = "col-md-3" id = "form-container"></div>
             <div class = "col-md-5" id = "sale-summary"></div>

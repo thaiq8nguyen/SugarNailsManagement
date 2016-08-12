@@ -29,6 +29,7 @@
     $query = "SELECT id from fromSquare_DailySale WHERE DATE(saleDate) = '" . $today."'";
 
     $result = mysqli_query($link,$query);
+
     if($result){
         $rowCount = mysqli_num_rows($result);
         if($rowCount == 0)  {
@@ -36,7 +37,6 @@
             VALUES('" . $today . "'," . $grossSale . "," . $grossTip . ","
                 . $cashPayment ."," . $creditCardPayment . ",'" . $now . "')";
             $result = mysqli_query($link,$query);
-            echo('Adding Record');
         }
         else if($rowCount == 1){
             $detail = mysqli_fetch_assoc($result);
@@ -46,7 +46,6 @@
                 ",lastUpdate = '" . $now . "' WHERE id = " . $id;
 
             $result = mysqli_query($link, $query);
-            echo("Updating Record");
 
 
         }
