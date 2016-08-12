@@ -10,15 +10,13 @@
     require ($base.'/php/Connection.php');
     require ($base.'/php/WS_SquareTotalSale.php');
 
-
-
-    $today = date('2016-08-13');
+    $today = date('Y-m-d');
 
     $date = new DateTime($today);
-    $date->modify('-1 day');
-    $yesterday = $date->format('Y-m-d');
+    $date->modify('+1 day');
+    $tomorrow= $date->format('Y-m-d');
 
-    $payments = getTodayPayment(getLocationIds(),$yesterday,$today);
+    $payments = getTodayPayment(getLocationIds(),$today,$tomorrow);
     $sale = getTodaySale($payments);
 
     $grossSale = $sale['grossSale'];
@@ -28,10 +26,31 @@
 
     $now = date('Y-m-d H:i:s');
 
-    $query = "INSERT INTO fromSquare_DailySale(saleDate,grossSale,grossTip,cashPayment,creditCardPayment,lastUpdate) 
-        VALUES('" . $yesterday . "'," . $grossSale . "," . $grossTip . ","
-        . $cashPayment ."," . $creditCardPayment . ",'" . $now . "')";
-    $result = mysqli_query($link,$query);
+    $query = "SELECT id from fromSquare_DailySale WHERE DATE(saleDate) = '" . $today."'";
+
+
+    if($result = mysqli_query($link,$query)){
+        if(mysqli_num_rows($result) == 0)  {
+            $query = "INSERT INTO fromSquare_DailySale(saleDate,grossSale,grossTip,cashPayment,creditCardPayment,lastUpdate) 
+            VALUES('" . $today . "'," . $grossSale . "," . $grossTip . ","
+                . $cashPayment ."," . $creditCardPayment . ",'" . $now . "')";
+            $result = mysqli_query($link,$query);
+        }
+        else if(mysqli_num_rows($result) == 1){
+            $detail = mysqli_fetch_assoc($result);
+            $id = $detail['id'];
+            $query = "UPDATE fromSquare_DailySale SET grossSale = " . $grossSale . ", grossTip = " . $grossTip .
+                ", cashPayment = " . $cashPayment . ", creditCardPayment = " . $creditCardPayment .
+                ",lastUpdate = '" . $now . "' WHERE id = " . $id;
+
+            $result = mysqli_query($link, $query);
+
+
+        }
+    }
+
+
+
 
     /*
     if($result){
