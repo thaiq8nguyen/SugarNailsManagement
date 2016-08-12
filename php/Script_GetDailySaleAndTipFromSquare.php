@@ -28,8 +28,9 @@
 
     $query = "SELECT id from fromSquare_DailySale WHERE DATE(saleDate) = '" . $today."'";
 
+    $result = mysqli_query($link,$query);
 
-    if($result = mysqli_query($link,$query)){
+    if($result){
         $rowCount = mysqli_num_rows($result);
         if($rowCount == 0)  {
             $query = "INSERT INTO fromSquare_DailySale(saleDate,grossSale,grossTip,cashPayment,creditCardPayment,lastUpdate) 
