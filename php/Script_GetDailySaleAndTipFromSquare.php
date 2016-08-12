@@ -12,7 +12,7 @@
 
 
 
-    $today = date('2016-07-25');
+    $today = date('2016-08-13');
 
     $date = new DateTime($today);
     $date->modify('-1 day');
