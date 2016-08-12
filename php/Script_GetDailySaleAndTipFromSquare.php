@@ -30,13 +30,14 @@
 
 
     if($result = mysqli_query($link,$query)){
-        if(mysqli_num_rows($result) == 0)  {
+        $rowCount = mysqli_num_rows($result);
+        if($rowCount == 0)  {
             $query = "INSERT INTO fromSquare_DailySale(saleDate,grossSale,grossTip,cashPayment,creditCardPayment,lastUpdate) 
             VALUES('" . $today . "'," . $grossSale . "," . $grossTip . ","
                 . $cashPayment ."," . $creditCardPayment . ",'" . $now . "')";
             $result = mysqli_query($link,$query);
         }
-        else if(mysqli_num_rows($result) == 1){
+        else if($rowCount == 1){
             $detail = mysqli_fetch_assoc($result);
             $id = $detail['id'];
             $query = "UPDATE fromSquare_DailySale SET grossSale = " . $grossSale . ", grossTip = " . $grossTip .
@@ -48,6 +49,8 @@
 
         }
     }
+
+
 
 
 
