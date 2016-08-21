@@ -1,7 +1,6 @@
 $(document).ready(function(){
-    var $fromDate = $('#from-datepicker');
-    var $toDate = $('#to-datepicker');
-    var $dateForm = $('#date-form');
+    var $payPeriodForm = $('#pay-period-form');
+    var $payPeriodSelect = $('#pay-period-select');
     var $payModal = $('#pay-modal');
 
     $payModal.modal('hide');
@@ -9,60 +8,49 @@ $(document).ready(function(){
 
     var $groupWageContainer = $('#group-wage-container');
 
-    $fromDate.datepicker({
-        dateFormat: 'yy-mm-dd'
-    });
-    $toDate.datepicker({
-        dateFormat: 'yy-mm-dd'
+    /* Get pay period selection */
+    $.ajax({
+        type:'get',
+        url:'../php/Script_GetPayPeriods.php',
+        dataType:'json'
+    }).done(function(response){
+
+        var $option = '';
+        for(var i = 0; i < response.length; i++){
+            $option += '<option value = "' + response[i].id + '">' + response[i].period + '</option>';
+
+        }
+        $payPeriodSelect.append($option);
     });
 
-    $dateForm.submit(function(event){
+    $payPeriodForm.submit(function(event){
         event.preventDefault();
-        var validDate = true;
-        if($fromDate.val() == ''){
-            validDate = false;
-        }
-        if($toDate.val() == ''){
-            validDate = false;
-        }
+        var payPeriod = $payPeriodSelect.find('option:selected').text();
+        var payPeriodID = $payPeriodSelect.val();
+        sessionStorage.setItem("payPeriod",payPeriod);
+        sessionStorage.setItem("payPeriodID",payPeriodID);
+        GetTechSaleByPeriod(payPeriodID);
 
-        if(validDate){
-            sessionStorage.setItem("payPeriod",$fromDate.val() + " - " + $toDate.val());
-            GetTechSaleByPeriod($fromDate.val(),$toDate.val());
-        }
-        else{
-            alert('Select the dates');
-        }
 
     });
 
-    $('.make-payment-btn').click(function(){
-        Pay();
-    });
-    $(document).on("blur","#check-payment #other-payment",function(event){
-        var checkAmount = parseInt($(this).val());
-        var otherAmount = parseInt($(this).closest('tr').find('#payment-one').val());
-
-        console.log(checkAmount + otherAmount);
-    });
 
     $(document).on('click',".open-pay-modal-btn",function(){
+        var techID = $(this).attr('id');
+        var wage = JSON.parse(sessionStorage.getItem('wage'));
+        var result = $.grep(wage, function(e){
+            return e.techID == techID;
+        });
+        sessionStorage.setItem("techSale", JSON.stringify(result));
 
-        sessionStorage.setItem('techID',$(this).siblings('.row').children('.col-md-4').find('.techID').val());
-        sessionStorage.setItem('techName',$(this).siblings('.row').children('.col-md-4').find('.techName').val());
-        sessionStorage.setItem('grossSale',$(this).siblings('.row').children('.col-md-4').find('.grossSale').val());
-        sessionStorage.setItem('grossTip',$(this).siblings('.row').children('.col-md-4').find('.grossTip').val());
-        sessionStorage.setItem('saleEarning',$(this).siblings('.row').children('.col-md-4').find('.saleEarning').val());
-        sessionStorage.setItem('tipEarning',$(this).siblings('.row').children('.col-md-4').find('.tipEarning').val());
-        sessionStorage.setItem('totalEarning',$(this).siblings('.row').children('.col-md-4').find('.totalEarning').val());
-        sessionStorage.setItem('payStatus',$(this).siblings('.row').children('.col-md-4').find('.payStatus').val());
 
 
         $payModal.modal('show');
     });
     $(document).on('click','.open-pay-report-btn',function(){
         var payPeriod = sessionStorage.getItem('payPeriod');
-        var techID = $(this).siblings('.row').children('.col-md-4').find('.techID').val();
+        var techID = $(this).data("tech-id");
+
         $(function(){
             /*
             $.ajax({
@@ -74,24 +62,28 @@ $(document).ready(function(){
                 console.log(response);
             });
             */
-            window.location.href = '../php//Script_GetPayReportByPeriod.php?techID=' + techID + '&'+ 'payPeriod=' + payPeriod;
+            window.open('../php//Script_GetPayReportByPeriod.php?payPeriod=' + payPeriod + '&'+ 'techID=' + techID,'_blank');
         });
     });
 
     /*START PAY MODAL EVENT********************************************************************************************/
-
-    var $openPDFPayReportBtn = '<button type = "button" class = "btn btn-primary open-pay-report-btn">Report</button>';
-    var $closeModalBtn = '<button type = "button" class="btn btn-primary" data-dismiss = "modal">Close</button>';
+    var $paymentPending = $('.payment-pending');
+    var $paymentMade = $('.payment-made');
+    var $makePaymentBtn = $('.make-payment-btn');
 
     $payModal.on('show.bs.modal',function(){
-        $('.pay-modal-title h3').text(sessionStorage.getItem('techName'));
-        GetTechSaleListByPeriodModal(sessionStorage.getItem('payPeriod'));
+        var techSale = JSON.parse(sessionStorage.getItem("techSale"));
+        $('.pay-modal-title h3').text(techSale[0].technician);
+        GetTechSaleListByPeriodModal();
         GetTechSaleSummaryModal();
         GetTechSalePaymentModal();
     });
 
     $payModal.on('hide.bs.modal', function(){
-        //sessionStorage.clear();
+        var pay = sessionStorage.getItem('pay');
+        if(pay == 'success'){
+            GetTechSaleByPeriod(sessionStorage.getItem('payPeriodID'));
+        }
     });
 
     $(document).on('click','.add-payment-btn',function(){
@@ -137,168 +129,124 @@ $(document).ready(function(){
             paymentCount++;
         });
     });
+    $makePaymentBtn.click(function(){
+        Pay();
+    });
 
     /*END PAY MODAL EVENT**********************************************************************************************/
 
     /*START FUNCTIONS**************************************************************************************************/
 
     function GetTechSaleListByPeriodModal(){
-        var payPeriod = sessionStorage.getItem('payPeriod');
-        var techID = sessionStorage.getItem('techID');
-        var wageTable = '<table class = "table table-condensed">' +
-            '<thead>' +
-                '<tr>' +
-                    '<th>Date</th>' +
-                    '<th>Sale</th>' +
-                    '<th>Tip</th>' +
-                    '<th></th>' +
-                '</tr>' +
-            '</thead><tbody>';
+        var wage = JSON.parse(sessionStorage.getItem("techSale"));
+        var techID = wage[0].techID;
+        var payPeriodID = sessionStorage.getItem('payPeriodID');
+        var $saleTable = $('.daily-sale-table');
+        var $sale = '';
         $.ajax({
             type:'get',
             url:'../php/Script_GetTechSaleListByPeriod.php',
-            data:{payPeriod:payPeriod,techID:techID},
+            data:{payPeriodID:payPeriodID,techID:techID},
             dataType:'json'
         }).done(function(response){
-            console.log(response);
             for(var i = 0; i < response.length; i++){
-                wageTable += '<tr><td>' + response[i]['workDay'] + '</td><td>$ ' + response[i]['sale'] + '</td>' +
+                $sale += '<tr><td>' + response[i]['workDay'] + '</td><td>$ ' + response[i]['sale'] + '</td>' +
                     '<td>$ ' + response[i]['tip'] + '</td></tr>';
             }
-            wageTable += '</tbody></table>';
-            $('#daily-sale-table-container').empty().append(wageTable);
+            $saleTable.find('tbody').empty().append($sale);
+
         });
     }
     function GetTechSaleSummaryModal(){
-        var $wagePanel = '<div class = "panel panel-default"><div class = "panel-heading">Wage</div>' +
-                '<div class = "panel-body">' +
-                    '<table class = "table table-condensed">' +
-                        '<tr>' +
-                            '<th>Gross Sale</th>' +
-                            '<td>$ ' + sessionStorage.getItem("grossSale") + '</td>' +
-                        '</tr>' +
-                        '<tr>' +
-                            '<th>Gross Tip</th>' +
-                            '<td>$ ' + sessionStorage.getItem("grossTip") + '</td>' +
-                        '</tr>' +
-                        '<tr>' +
-                            '<th>Earn Sale</th>' +
-                            '<td>$ ' + sessionStorage.getItem("saleEarning") + '</td>' +
-                        '</tr>' +
-                        '<tr>' +
-                            '<th>Earn Tip</th>' +
-                            '<td>$ ' + sessionStorage.getItem("tipEarning") + '</td>' +
-                        '</tr>' +
-                        '<tr>' +
-                        '<th>Total Wage</th>' +
-                        '<td>$ ' + sessionStorage.getItem("totalEarning") + '</td>' +
-                        '</tr>' +
-                        '<tr>' +
-                            '<th>Account Balance</th>' +
-                            '<td>$</td>' +
-                        '</tr>' +
-                    '</table>' +
-                '</div>';
-        $('#wage-panel-container').empty().append($wagePanel);
+        var wage = JSON.parse(sessionStorage.getItem("techSale"));
+        var $wageTable = $('.wage-table tr');
+        //Declare a 'w' array to store sale metric values
+        var w = [];
+        //Loop through the array object and store the sale value into the new array
+        $.each(wage[0].sale,function(key,value) {
+            w.push(value);
+        });
+        //Loop through each row and find each td, store the sale value in them
+        $wageTable.each(function(index,row){
+            var $row = $(row);
+            $row.find('td').each(function(){
+                $(this).html('$ ' + w[index]);
+            });
+        });
+
+        var modPayStatus = $wageTable.find('td').last().text().replace('$','');
+        $wageTable.find('td').last().text(modPayStatus);
+
+        if(wage[0].sale.payStatus === 'Paid'){
+            var paidStyles = {background:'#5cb85c',color:'white','font-weight':"bold"};
+            $wageTable.find('td').last().css(paidStyles);
+        }
+        else{
+            var pendingStyles = {background:'transparent',color:'black','font-weight':"normal"};
+            $wageTable.find('td').last().css(pendingStyles);
+        }
+
     }
     function GetTechSalePaymentModal(){
-        var $paymentMade = '<div class = "panel panel-default"><div class = "panel-heading payment-panel-heading">Pay</div>' +
-            '<div class = "panel-body payment-panel-body"><h3>Payments Made!</h3>'+
-            '<p>' + sessionStorage.getItem("techName") + ' had been paid for pay period ' +
-            sessionStorage.getItem("payPeriod") + ' </p>'+
-            '</div>';
-        var payStatus = sessionStorage.getItem('payStatus');
+        var wage = JSON.parse(sessionStorage.getItem("techSale"));
+        var payStatus = wage[0].sale.payStatus;
 
-        var $paymentPanel = '<div class = "panel panel-default"><div class = "panel-heading payment-panel-heading">Pay</div>' +
-                '<div class = "panel-body payment-panel-body">' +
-                    '<table class = "table table-condensed payment-table">' +
-                        '<thead><tr><th>#</th><th>Amount</th><th>Method</th><th>Reference</th><th>Action</th></tr></thead>' +
-                        '<tbody>' +
-                            '<tr class = "payment-row">' +
-                                '<td>1</td>' +
-                                '<td><div class = "input-group payment-group">' +
-                                    '<span class="input-group-addon">$</span>' +
-                                    '<input type = "number"  class = "form-control payment-amount">' +
-                                    '</div></td>' +
-                                '<td><div class = "form-group payment-group">' +
-                                    '<select id = "payment-method-1" class = "form-control payment-method">' +
-                                        '<option value = "1">Cash</option>' +
-                                        '<option value = "2" selected>Check</option>' +
-                                    '</select>' +
-                                    '</div></td>' +
-                                '<td><div class = "form-group payment-group">' +
-                                '<input class = "form-control payment-reference">' +
-                                '</div></td>' +
-                                '<td><button type = "button"  class = "btn btn-primary add-payment-btn">' +
-                                '<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>' +
-                                '</button></td>' +
-                            '</tr>' +
-                        '</tbody>'+
-                    '</table>' +
-                '</div>';
+
         if(payStatus === 'Pending'){
-            $('#payment-panel-container').empty().append($paymentPanel);
-
+            $paymentPending.show();
+            $paymentMade.hide();
         }
         else if(payStatus === 'Paid'){
-            $('#payment-panel-container').empty().append($paymentMade);
-            $('.make-payment-btn').replaceWith($closeModalBtn);
+            $paymentMade.show();
+            $paymentPending.hide();
+            $makePaymentBtn.hide();
         }
 
     }
-    function GetTechSaleByPeriod(from,to){
+    function GetTechSaleByPeriod(payPeriodID){
         $.ajax({
             type: 'get',
             url: '../php/Script_GetTechSaleByPeriod.php',
-            data:{fromDate:from,toDate:to},
+            data:{payPeriodID:payPeriodID},
             dataType:'json'
         }).done(function(response){
             var $techWage = '';
-
-
-
+            sessionStorage.setItem("wage",JSON.stringify(response));
             for(var i = 0; i < response.length; i++){
                 $techWage += '<div class = "panel panel-default single-container">' +
-                    '<div class = "panel-heading"><h3 class = "panel-title">' + response[i].technician +
-                    '<span class = "label label-default pull-right ">' + response[i].payStatus + '</span></h3></div>' +
+                    '<div class = "panel-heading"><h3 class = "panel-title">' + response[i].technician + '' +
+                    '<span class = "label label-default pull-right">' + response[i].sale.payStatus + '</span></h3></div>' +
                         '<div class = "panel-body">' +
                             '<div class = "row">' +
-                                '<div class = "col-md-4">' +
-                                    '<h4>Wage</h4><p>$ ' + response[i].totalEarning + '</p>' +
-                                    '<input type = "hidden" class = "techID" value = "' + response[i].techID + '">' +
-                                    '<input type = "hidden" class = "techName" value = "' + response[i].technician + '">' +
-                                    '<input type = "hidden" class = "grossSale" value = "' + response[i].grossSale + '">' +
-                                    '<input type = "hidden" class = "grossTip" value = "' + response[i].grossTip + '">' +
-                                    '<input type = "hidden" class = "saleEarning" value = "' + response[i].saleEarning + '">' +
-                                    '<input type = "hidden" class = "tipEarning" value = "' + response[i].tipEarning + '">' +
-                                    '<input type = "hidden" class = "totalEarning" value = "' + response[i].totalEarning + '">' +
-                                    '<input type = "hidden" class = "payStatus" value = "' + response[i].payStatus + '">' +
+                                '<div class = "col-md-6">' +
+                                    '<h4>Total Wage</h4><p>$ ' + response[i].sale.totalEarning + '</p>' +
                                 '</div>' +
-
                             '</div>' +
-                        '<button type = "button" class = "btn btn-primary open-pay-modal-btn">Detail</button>'+
+                        '<button type = "button" id = "' + response[i].techID +
+                        '" class = "btn btn-primary open-pay-modal-btn" data-tech-id = "' + response[i].techID + '">Detail</button>'+
+                        '<button type = "button" class = "btn btn-primary open-pay-report-btn" data-tech-id = "' + response[i].techID + '" >Report</button>'+
                         '</div>' +
                     '</div>';
             }
             $groupWageContainer.empty().append($techWage);
-
             $('.single-container').each(function () {
-                var payStatus = $(this).find('.payStatus').val();
+                var payStatus = $(this).find('.label').html();
                 if(payStatus === 'Paid'){
                     $(this).find('.label').removeClass('label-default').addClass('label-success');
-                    $(this).find('.open-pay-modal-btn').after($openPDFPayReportBtn);
                 }
             });
         });
     }
     function Pay(){
-
+        var techSale = JSON.parse(sessionStorage.getItem("techSale"));
         var payPeriod = sessionStorage.getItem('payPeriod');
+        var periodID = sessionStorage.getItem('periodID');
+
         if (PayValidation()){
             var techPay = [];
             var payDetail = {};
-            payDetail["techID"] = sessionStorage.getItem('techID');
-            payDetail['wage'] = sessionStorage.getItem('totalEarning');
+            payDetail["techID"] = techSale[0].techID;
+            payDetail['wage'] = techSale[0].sale.netWage;
             var payment = [];
             $('.payment-table tbody tr').each(function (row, tr) {
                 if ($(tr).find('td:eq(1) input').val().length !== 0) {
@@ -312,7 +260,7 @@ $(document).ready(function(){
             });
             payDetail["payments"] = payment;
             techPay.push(payDetail);
-
+            console.log(techPay);
             $.ajax({
             type:'post',
             url:'../php/Script_PayDay.php',
@@ -321,14 +269,12 @@ $(document).ready(function(){
 
             }).done(function(response) {
                 if(response.status === "success"){
-                    $('#payment-panel-container').empty().append($paymentMade);
-                    $('.make-payment-btn').replaceWith($closeModalBtn);
+                    $paymentMade.show();
+                    $paymentPending.hide();
+                    $makePaymentBtn.hide();
+                    sessionStorage.setItem("pay",response.status);
                 }
-
             });
-
-
-
         }
     }
 

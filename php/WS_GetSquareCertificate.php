@@ -12,7 +12,9 @@
     # Results are rendered in a simple HTML pre block.
     # Replace this value with the path to the Unirest PHP lib
     $base = dirname(dirname(__FILE__));
-    require ($base.'/phplib/UnirestPHP/Unirest.php');
+    require($base . '/phplib/UnirestPHP/Unirest.php');
+
+    date_default_timezone_set('America/Los Angeles');
 
     #if(isset($_GET['saleDate'])){
         # Replace this value with your application's personal access token,
@@ -35,8 +37,13 @@
         $payments = getTodayPayment(getLocationIds(),$beginDate,$endDate);
         getTodaySale($payments);
         */
+        /*
+        $locationID = getLocationIds();
+        $payment = getTodayPayment($locationID,"2016-08-01","2016-08-03");
+        $gift = getGiftCertificate($payment);
 
-
+        print_r($gift);
+        */
 
         # Helper function to convert cent-based money amounts to dollars and cents
         function formatMoney($money) {
@@ -51,6 +58,7 @@
             $locations = $response->body;
 
             return($locations[0]->id);
+
 
         }
 
@@ -105,37 +113,24 @@
                 $seenPaymentIds[$payment->id] = true;
                 array_push($uniquePayments, $payment);
             }
+
             return $uniquePayments;
         }
-
-        function getTodaySale($payments){
-
-            $totalCollected = 0;
-            $totalTipOnCard = 0;
-            $totalCashPayment = 0;
-            $totalCreditCardPayment = 0;
-
+        function getGiftCertificate($payments){
+            $response = "";
             foreach($payments as $payment){
+                foreach($payment->itemizations as $item){
+                    if($item->name == 'Gift Certificate'){
+                        $response[] = array("transactionID" => $payment->id, "amount" => formatMoney($payment->total_collected_money->amount),
+                            "saleDate" => date("Y-m-d G:i:s",strtotime($payment->created_at)));
 
-                $totalCollected = $totalCollected + $payment->total_collected_money->amount;
-                $totalTipOnCard =  $totalTipOnCard + $payment->tip_money->amount;
-
-                foreach($payment->tender as $paymentType){
-                    if($paymentType->type == "CREDIT_CARD"){
-                        $totalCreditCardPayment = $totalCreditCardPayment + $payment->total_collected_money->amount;
-                    }
-                    else if($paymentType->type == "CASH"){
-                        $totalCashPayment = $totalCashPayment + $payment->total_collected_money->amount;
                     }
                 }
+
             }
-
-            $grossSales = $totalCollected - $totalTipOnCard;
-
-            return( array("grossSale" => formatMoney($grossSales), "grossTip" => formatMoney($totalTipOnCard),
-                "cash" => formatMoney($totalCashPayment),"creditCard" => formatMoney($totalCreditCardPayment)));
-
+            return $response;
         }
+
 
     #}
 

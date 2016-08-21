@@ -3,21 +3,63 @@
  */
 $(document).ready(function(){
     var $techList = $('#tech-list');
+    var $saleEntryPanel = $('#sale-entry-panel');
     var $formContainer = $('#form-container');
     var $summaryContainer = $('#sale-summary');
     var $datepicker = $('#datepicker');
+    var $previousDayBtn = $('#previous-day-btn');
+    var $nextDayBtn = $('#next-day-btn');
+    var $wageTableRow = $('.wage-table tbody tr td');
+    var $saleSummaryTable = $('.sale-summary-table');
+    var $saleTableRow = $('.sale-summary-table tr');
+    var $saleEntryAlert = $('#sale-entry-alert');
+    var $saleSummaryAlert = $('#sale-summary-alert');
+    var $addSaleBtn = $('#add-sale-btn');
+    var $updateSaleBtn = $('#update-sale-btn');
+    var $deleteSaleBtn = $('#delete-sale-btn');
+    var $saleEntryForm = $('#sale-entry-form');
 
     $datepicker.datepicker({
-        dateFormat: 'yy-mm-dd'
-    });
+        dateFormat: 'yy-mm-dd',
+        setDate:new Date()
 
-    $datepicker.datepicker('setDate', new Date());
-
-    $datepicker.on('change',function(){
+    }).on('change',function(){
         CreateTechList();
         UpdateTotalSaleAndTip();
         $formContainer.hide();
         $summaryContainer.hide();
+    });
+
+    $datepicker.datepicker('setDate', new Date());
+
+    $previousDayBtn.click(function(){
+        var currentDate = $datepicker.val().replace(/-/g, '\/');
+        var previousDate = new Date(currentDate);
+
+        previousDate.setDate(previousDate.getDate()-1);
+
+        var dd = previousDate.getDate();
+        var mm = previousDate.getMonth()+1;
+        var yy = previousDate.getFullYear();
+
+        var aDate = yy + '-' + mm + '-' + dd;
+        $datepicker.datepicker('setDate', new Date(aDate));
+        $datepicker.change();
+    });
+
+    $nextDayBtn.click(function(){
+        var currentDate = $datepicker.val().replace(/-/g, '\/');
+        var nextDate = new Date(currentDate);
+
+        nextDate.setDate(nextDate.getDate()+1);
+
+        var dd = nextDate.getDate();
+        var mm = nextDate.getMonth()+1;
+        var yy = nextDate.getFullYear();
+
+        var aDate = yy + '-' + mm + '-' + dd;
+        $datepicker.datepicker('setDate', new Date(aDate));
+        $datepicker.change();
     });
 
     /*INITIALIZE
@@ -25,150 +67,109 @@ $(document).ready(function(){
     ** -Populate current internal sale data
     ** -Populate current Square sale data
      */
+
+    $saleEntryPanel.hide();
     CreateTechList();
     UpdateTotalSaleAndTip();
-
-
-
+    sessionStorage.clear();
 
     /* Display sale entry form when the user clicks on a technician's name*/
     $(document).on('click','.select-tech-btn',function(){
-        var techID = $(this).attr('id');
-        var techName = $(this).attr('name');
-        var $saleEntry = '';
-        var saleID = '';
-        $(this).siblings().removeClass('active'); //remove active styling from other buttons
-        $(this).addClass('active');
 
+        sessionStorage.setItem("techID",$(this).attr('id'));
+        sessionStorage.setItem("techName", $(this).attr('name'));
+
+        $(this).addClass('active').siblings().removeClass('active'); //remove active styling from other buttons
+
+        SaleEntryView();
+    });
+    $addSaleBtn.on('click',function() {
+        //EntryValidation();
+        var techID = sessionStorage.getItem('techID');
+        var data = $saleEntryForm.serializeArray();
+        data.push({name:"action",value: "setTechSale"},{name:"techID",value:techID},
+            {name:"saleDate",value:$datepicker.val()});
         $.ajax({
-            type: 'get',
-            url: '../php/Script_GetIndividualTechSale.php',
-            data:{techID: techID , saleDate:$datepicker.val()},
+            type: 'post',
+            url: '../php/Script_DailySale_Functions.php',
+            data: data,
             dataType: 'json'
-        }).done(function(response){
-            console.log(response);
-            var sale = response.sale;
-            var cctip = response.cctip;
+        }).done(function(response) {
+            if(response.status === 'success'){
 
-            $saleEntry = '<form id = "sale-entry-form" id = "sale-entry-form" name = "sale-entry-form">' +
-                '<div class = "panel panel-primary">' +
-                '<div class = "panel-heading">' +
-                '<h3 class = "panel-title">' + techName + '</h3>' +
-                '</div>' +
-                '<div class = "panel-body">' +
-                '<div class = "form-group">' +
-                '<label for = "sale">Sale: ($)</label>' +
-                '<div class = "input-group">' +
-                '<div class = "input-group-addon">$</div>' +
-                '<input type = "number" id = "sale" class = "form-control" name = "sale" ' +
-                'value = "' + sale + '">' +
-                '</div>' +
-                '</div>' +
-                '<div class = "form-group">' +
-                '<label for = "cctip">Tip on Credit Card: ($)</label>' +
-                '<div class = "input-group">' +
-                '<div class = "input-group-addon">$</div>' +
-                '<input type = "number" id = "cctip" class = "form-control" name = "cctip" ' +
-                'value = "' + cctip + '">' +
-                '</div>' +
-                '<input type = "hidden" name = "techID" id = "techID" value = "' + techID  + '">' +
-                '<input type = "hidden" name = "saleID" id = "saleID" value = "' + response.saleID  + '">' +
-                '<input type = "hidden" name = "saleDate" id = "saleDate" value = "' + $datepicker.val() + '">' +
-                '</div>' +
-                '<button type = "button" id = "add-sale-btn" class = "btn btn-primary">Add Sale</button>' +
-                '</div>' +
-                '</div>' +
-                '</form>';
-            $formContainer.empty().append($saleEntry);
-            $formContainer.show();
-            $summaryContainer.show();
-            UpdateTechSaleSummary(techID,techName,$datepicker.val())
+                $saleEntryAlert.empty().
+                append('<h3>Success!</h3><p>The sale has been recorded.</p>').addClass('alert alert-success').show();
+                $addSaleBtn.hide();
+                $updateSaleBtn.show();
+                $deleteSaleBtn.show();
+                sessionStorage.setItem("saleID",response.saleID);
+            }
+            CreateTechList();
+            UpdateTotalSaleAndTip();
+
         });
     });
-    $(document).on('click','#add-sale-btn',function(){
-        var $confirmation = '';
 
-        EntryValidation();
+    $updateSaleBtn.click(function(){
 
-        if($('#saleID').val() === 'nosale'){
-            $.ajax({
-                type: 'post',
-                url:'../php/Script_TechSaleEntry.php',
-                data: $('#sale-entry-form').serializeArray(),
-                dataType: 'json'
-            }).done(function(response){
-                console.log(response);
-                if(response.status == 'success'){
-                    $confirmation = '<div class = "panel panel-success">' +
-                        '<div class = "panel-heading">' +
-                        '<h3 class = "panel-title">Success</h3>' +
-                        '</div>' +
-                        '<div class = "panel-body">' +
-                        '<p>' + response.techName + ' makes $' + response.sale + ' in sale and $'
-                        + response.cctip + ' in credit card tip </p>' +
-                        '</div>' +
-                        '</div>';
-                }
-                else{
-                    $confirmation = '<div class = "panel panel-danger">' +
-                        '<div class = "panel-heading">' +
-                        '<h3 class = "panel-title">Failure</h3>' +
-                        '</div>' +
-                        '<div class = "panel-body">' +
-                        '<p>Technician sale has NOT been entered.</p>' +
-                        '</div>' +
-                        '</div>';
-                }
-                $formContainer.empty().append($confirmation);
-                CreateTechList();
-                UpdateTotalSaleAndTip();
-                UpdateTechSaleSummary();
-            });
-        }
-        else{
-            $.ajax({
-                type: 'post',
-                url:'../php/Script_TechSaleUpdate.php',
-                data: $('#sale-entry-form').serializeArray(),
-                dataType: 'text'
-            }).done(function(response){
-                if(response == 'success'){
-                    $confirmation = '<div class = "panel panel-success">' +
-                        '<div class = "panel-heading">' +
-                        '<h3 class = "panel-title">Success</h3>' +
-                        '</div>' +
-                        '<div class = "panel-body">' +
-                        '<p>Technician sale has been updated.</p>' +
-                        '</div>' +
-                        '</div>';
-                }
-                else{
-                    $confirmation = '<div class = "panel panel-danger">' +
-                        '<div class = "panel-heading">' +
-                        '<h3 class = "panel-title">Failure</h3>' +
-                        '</div>' +
-                        '<div class = "panel-body">' +
-                        '<p>Technician sale has NOT been update.</p>' +
-                        '</div>' +
-                        '</div>';
-                }
-                $formContainer.empty().append($confirmation);
-                CreateTechList();
-                UpdateTotalSaleAndTip();
-                UpdateTechSaleSummary();
-            });
+        var techID = sessionStorage.getItem('techID');
+        var saleID = sessionStorage.getItem('saleID');
+        var data = $saleEntryForm.serializeArray();
+        data.push({name:"action",value: "updateTechSale"},{name:"saleID",value:saleID},
+            {name:"saleDate",value:$datepicker.val()});
+        $.ajax({
+            type: 'post',
+            url: '../php/Script_DailySale_Functions.php',
+            data: data,
+            dataType: 'text'
+        }).done(function(response) {
 
-        }
+            if(response === 'success'){
 
+                $saleEntryAlert.empty().
+                append('<h3>Success!</h3><p>The sale has been updated.</p>').addClass('alert alert-success').show();
+                $addSaleBtn.hide();
+                $updateSaleBtn.show();
+                $deleteSaleBtn.show();
+
+            }
+            CreateTechList();
+            UpdateTotalSaleAndTip();
+
+        });
     });
 
 
+    $deleteSaleBtn.click(function(){
+        var saleID = sessionStorage.getItem('saleID');
+        var data = [];
+        data.push({name:"action",value:"deleteTechSale"},{name:"saleID",value:saleID},{name:"saleDate",value:$datepicker.val()});
+        $.ajax({
+            type: 'post',
+            url:'../php/Script_DailySale_Functions.php',
+            data: data,
+            dataType: 'text'
+        }).done(function(response){
+            if(response === 'success'){
+                $saleEntryAlert.empty().
+                append('<h3>Success!</h3><p>The sale has been <strong>deleted</strong>.</p>').addClass('alert alert-success').show();
+                $saleEntryForm[0].reset();
+                $deleteSaleBtn.hide();
+                $updateSaleBtn.hide();
+                $addSaleBtn.show();
+                CreateTechList();
+                UpdateTotalSaleAndTip();
+            }
+            else{
 
+            }
+        });
+    });
     function CreateTechList(){
         $.ajax({
             type: 'get',
-            url: '../php/Script_GetTechSaleByDate.php',
-            data:{saleDate:$datepicker.val()},
+            url: '../php/Script_DailySale_Functions.php',
+            data:{action:"getAllTechDailySale",saleDate:$datepicker.val()},
             dataType: 'json'
         }).done(function(response){
             var $list = '';
@@ -177,76 +178,102 @@ $(document).ready(function(){
 
                     $list += '<button type = "button" id = "'+ response[i].techID +
                         '" class = "list-group-item select-tech-btn" name = "' + response[i].name + '">' +
-                        '<span class = "badge">Sale: $' + response[i].sale +
+                        '<span class = "label label-success pull-right">Sale: $' + response[i].sale +
                         ' - Tip: $' + response[i].tip + '</span>'+response[i].name+'</button>';
                 }
                 else{
                     $list += '<button type = "button" id = "'+ response[i].techID +
                         '" class = "list-group-item select-tech-btn" name = "' + response[i].name + '">' +
-                        '<span class = "badge">No Sale</span>'+response[i].name+'</button>';
+                        '<span class = "label label-default pull-right">No Sale</span>'+response[i].name+'</button>';
                 }
             }
             $techList.empty().append($list);
         });
     }
-
     function UpdateTotalSaleAndTip(){
-        var internalSale = $.ajax({
-            type: 'get',
-            url: '../php/Script_GetTotalSaleAndTip.php',
-            data:{saleDate:$datepicker.val()},
-            dataType: 'json'
-        });
-        $.when(internalSale).done(function(sale){
-            $('#total-sale').text('$ ' + sale.grossSale);
-            $('#total-tip').text('$ ' + sale.grossTip);
-        });
-    }
-    function UpdateTechSaleSummary(techID,techName,saleDate){
-        var $saleSummary = '';
+        var s =[];
         $.ajax({
             type: 'get',
-            url: '../php/Script_GetIndividualTechSale.php',
-            data:{techID: techID , saleDate:saleDate},
+            url: '../php/Script_DailySale_Functions.php',
+            data: {action: "getTotalSaleAndTip", saleDate: $datepicker.val()},
+            dataType: 'json'
+
+        }).done(function(response){
+            if(response.status === 'success'){
+                $.each(response.sale,function(key,value){
+                    s.push(value);
+                });
+                $.each($saleTableRow,function(index,row){
+                    var $row = $(row);
+                    $row.find('td').each(function(){
+                        $(this).html('$ ' + s[index]);
+                    });
+                });
+                $saleSummaryAlert.hide();
+                $saleSummaryTable.show();
+            }
+            else if(response.status === 'failure'){
+                $saleSummaryTable.hide();
+                $saleSummaryAlert.empty().append('<h3>' + response.message + '</h3>').show();
+
+            }
+
+        });
+    }
+    function SaleEntryView(){
+        var $saleInput = $('#sale-input');
+        var $tipInput = $('#tip-input');
+        var displaySaleValue = '';
+        var displayTipvalue = '';
+        var wage = [];
+
+        var techID = sessionStorage.getItem('techID');
+        var techName = sessionStorage.getItem('techName');
+
+        //Update wage table
+        $.ajax({
+            type: 'get',
+            url: '../php/Script_DailySale_Functions.php',
+            data:{action: "getTechDailySale", techID: techID , saleDate:$datepicker.val()},
             dataType: 'json'
         }).done(function(response){
-        console.log(response);
-            if(response !== 'nosale'){
-                var saleEarning = parseFloat(response.saleEarning).toFixed(2);
-                var tipEarning = parseFloat(response.tipEarning).toFixed(2);
-                var totalEarning = (parseFloat(response.saleEarning) + parseFloat(response.tipEarning)).toFixed(2);
+            $.each(response.wage,function(key,value){
+                wage.push(value);
+            });
+
+            $wageTableRow.each(function(index){
+                $(this).html('$ ' + wage[index]);
+            });
+            $saleEntryPanel.find('.panel-title').text(techName);
+            if(response.sale !== '0.00'){
+                displaySaleValue = response.sale;
             }
-            else{
-
-                saleEarning = response.saleEarning;
-                tipEarning = response.tipEarning;
-                totalEarning = '0.00';
+            if(response.tip !== '0.00'){
+                displayTipvalue = response.tip;
             }
+            $saleInput.val(displaySaleValue);
+            $tipInput.val(displayTipvalue);
 
-            $saleSummary = '<div class = "panel panel-primary">' +
-                '<div class = "panel-heading">' +
-                '<h3 class = "panel-title">' + techName + '\'s Summary</h3>' +
-                '</div>' +
-                '<div class = "panel-body">'+
-                '<div class = "row">' +
-                '<div class = "col-md-4">' +
-                '<h4>Sale Earning</h4>' +
-                '<p> $ ' + saleEarning + '</p>' +
-                '</div>' +
-                '<div class = "col-md-4">' +
-                '<h4>Tip  Earning</h4>' +
-                '<p>$ ' + tipEarning +'</p>' +
-                '</div>' +
-                '<div class = "col-md-4">' +
-                '<h4>Total  Earning</h4>' +
-                '<p>$ ' + totalEarning + '</p>' +
-                '</div>' +
-                '</div>' +
-                '</div>' +
-                '</div>';
+            $saleEntryAlert.empty().hide();
+            if(response.saleStatus == "pending"){
 
-            $summaryContainer.empty().append($saleSummary);
+                $addSaleBtn.show();
+                $updateSaleBtn.hide();
+                $deleteSaleBtn.hide();
+                $saleEntryPanel.show();
+            }
+            else if(response.saleStatus == "recorded"){
+                sessionStorage.setItem("saleID",response.saleID);
+                $addSaleBtn.hide();
+                $updateSaleBtn.show();
+                $deleteSaleBtn.show();
+                $saleEntryPanel.show();
+
+            }
         });
+
+
+
 
     }
     function EntryValidation(){
@@ -254,16 +281,12 @@ $(document).ready(function(){
         var cctip = $('#cctip').val();
 
         if(sale == ''){
-            $('#sale').val('0.00');
+            $('#sale-input').val('0.00');
         }
         if(cctip == ''){
-            $('#cctip').val('0.00');
+            $('#tip-input').val('0.00');
         }
 
     }
-
-
-
-
 
 });

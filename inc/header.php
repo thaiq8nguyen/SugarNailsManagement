@@ -12,8 +12,8 @@
     <script type = "application/javascript" src = "<?php echo $pageScript?>"></script>
 </head>
 <body>
-    <div id = "wrapper">
-        <header>
+    <header>
+        <div class = "container">
             <div class = "row">
                 <div class = "col-md-4">
                     <h2><?php echo $pageTitle; ?></h2>
@@ -22,10 +22,11 @@
                     <!--<p>Signed in as tnguyen</p>-->
                 </div>
             </div
-        </header><!--End of Header-->
-    </div>
+        </div>
+    </header><!--End of Header-->
     <nav class = "nav navbar-default">
         <div class = "container">
+            <div class = "row">
             <ul class = "nav navbar-nav">
                 <li><a href = "../home.php">Home</a></li>
                 <!--<li><a href = "../management/sale.php">Sale</a></li>-->
@@ -43,6 +44,7 @@
             <ul class = "nav navbar-nav navbar-right">
                 <li><a class = "pull-right" href = "../signout.php">Sign Out</a></li>
             </ul>
+                </div>
         </div>
     </nav>
 

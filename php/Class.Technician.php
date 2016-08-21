@@ -9,6 +9,15 @@ require ($base. '/php/Connection.php');
  */
 class Technician
 {
+    private $firstName;
+    private $lastname;
+    private $position;
+    private $saleCommissionRate;
+    private $tipCommissionRate;
+    private $payMethodRatio;
+    private $hideDate;
+    private $email;
+    private $mobilePhone;
 
     public function GetFullName($techID){
         global $link;
@@ -26,6 +35,9 @@ class Technician
             }
         }
         return ($firstName . " " . $lastName);
+    }
+    public function GetEmployedTechnician(){
+
     }
 
 }
