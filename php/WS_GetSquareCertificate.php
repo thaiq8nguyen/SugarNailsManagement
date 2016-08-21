@@ -19,9 +19,9 @@
     #if(isset($_GET['saleDate'])){
         # Replace this value with your application's personal access token,
         # available from your application dashboard (https://connect.squareup.com/apps)
-        $accessToken = 'fJFktYv8MuIXzCYXPv-s2w';
+        $accessToken = '';
         # The base URL for every Connect API request
-        $connectHost = 'https://connect.squareup.com';
+        $connectHost = '';
         # Standard HTTP headers for every Connect API request
         $requestHeaders = array (
             'Authorization' => 'Bearer ' . $accessToken,
