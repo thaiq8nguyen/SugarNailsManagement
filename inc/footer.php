@@ -1,5 +1,5 @@
     <footer>
-            <nav class = "nav navbar-default" style = "text-align: center;">
+            <nav class = "nav navbar-default top-buffer" style = "text-align: center;">
                 <div class = "container">
                     <p>Developed by Thai Nguyen. Copyrighted by Resonance Corporation <?php echo date("Y"); ?></p>
                 </div>

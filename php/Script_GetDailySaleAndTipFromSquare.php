@@ -50,12 +50,6 @@
 
         }
     }
-
-
-
-
-
-
     /*
     if($result){
         //Email admin@sugarnailspa.com
