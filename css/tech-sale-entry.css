@@ -1,6 +1,9 @@
 .top-buffer{
     margin-top: 20px;
 }
+.sub-sale-entry-container{
+    height:1170px;
+}
 input.form-control{
     width: 200px;
 }
