@@ -15,6 +15,7 @@
     class PayReport extends FPDF
     {
         private $techName;
+        private $payDate;
         private $payPeriod;
         private $wage;
         private $grossSale;
@@ -24,6 +25,7 @@
         private $periodWage;
         private $totalWage;
         private $balance;
+        private $payment;
 
 
         public function getName(){
@@ -31,14 +33,15 @@
         }
         function Header(){
 
-            $this->SetFont('Arial','B',16);
+            $this->SetFont('Helvetica','B',16);
             $this->Cell(40,10,$this->techName);
             $x = $this->GetX();
             $this->SetX($x+100);
+            $this->SetFont('Arial','B',16);
             $this->Cell(60,10,"Wage Report");
             $this->Ln(8);
             $this->SetFont('Arial','',14);
-            $this->Cell(40,10,"Pay Date: " . date("Y-m-d"));
+            $this->Cell(40,10,"Pay Date: " . $this->payDate);
             $x = $this->GetX();
             $this->SetX($x+60);
 
@@ -49,17 +52,18 @@
         function ReportBody(){
 
             $header = array("Date","Sale","Tip");
-            $this->SetFont('Arial','',10);
+            $this->SetFont('Arial','B',11);
             // Header
             foreach ($header as $col){
-                $this->Cell(30, 5, $col, 1);
+                $this->Cell(35, 8, $col, 1);
 
             }
             $this->Ln();
+            $this->SetFont('Arial','',10);
             // Date
             foreach ($this->wage as $row) {
                 foreach ($row as $col){
-                    $this->Cell(30, 5, $col, 1);
+                    $this->Cell(35, 7, $col, 1);
                 }
                 $this->Ln();
             }
@@ -74,13 +78,13 @@
             $this->Cell(50,10, "$ " . $this->saleWage);
             $this->SetFont('Arial','B',12);
             $this->Cell(30,10, "Wage: ");
-            $this->Cell(25,10,"$ " . $this->totalWage);
+            $this->Cell(25,10,"$ " . $this->periodWage);
             $this->Ln();
             $this->SetFont('Arial','',10);
             $this->Cell(20,10,"Gross Tip: ");
             $this->Cell(25,10,"$ " . $this->grossTip);
             $this->Cell(20,10, "Tip Wage: ");
-            $this->Cell(50,10,"$" . $this->tipWage);
+            $this->Cell(50,10,"$ " . $this->tipWage);
             $this->SetFont('Arial','B',12);
             $this->Cell(30,10, "Balance: ");
             $this->Cell(25,10,"$ " . $this->balance);
@@ -91,6 +95,28 @@
             $this->SetX(125);
             $this->Cell(30,10, "Total Wage: ");
             $this->Cell(25,10,"$ " . $this->totalWage);
+            $this->Ln();
+            $this->SetFont('Arial','B',12);
+            $this->Cell(30,10, "Payments ");
+            $this->Ln();
+
+            $header = array("Method","Amount","Reference");
+            $this->SetFont('Arial','B',11);
+            // Header
+            foreach ($header as $col){
+                $this->Cell(35, 8, $col, 1);
+
+            }
+            $this->Ln();
+            $this->SetFont('Arial','',10);
+            // Date
+            foreach ($this->payment as $row) {
+                foreach ($row as $col){
+                    $this->Cell(35, 7, $col, 1);
+                }
+                $this->Ln();
+            }
+
 
         }
         public function SetName($techName){
@@ -99,8 +125,14 @@
         public function SetWage($wage){
             $this->wage = $wage;
         }
+        public function SetPayment($payment){
+            $this->payment = $payment;
+        }
         public function SetPayPeriod($payPeriod){
             $this->payPeriod = $payPeriod;
+        }
+        public function SetPayDate($payDate){
+            $this->payDate = $payDate;
         }
         public function SetWageMetric($grossSale,$grossTip,$saleWage,$tipWage,$periodWage,$totalWage,$balance){
             $this->grossSale = $grossSale;

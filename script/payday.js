@@ -1,7 +1,10 @@
-$(document).ready(function(){
+$(function(){
     var $payPeriodForm = $('#pay-period-form');
     var $payPeriodSelect = $('#pay-period-select');
     var $payModal = $('#pay-modal');
+    var $payDate = $('#paydate');
+    var dd,mm,yy;
+
 
     $payModal.modal('hide');
 
@@ -15,12 +18,27 @@ $(document).ready(function(){
         dataType:'json'
     }).done(function(response){
 
+        var  today = new Date();
         var $option = '';
         for(var i = 0; i < response.length; i++){
             $option += '<option value = "' + response[i].id + '">' + response[i].period + '</option>';
-
         }
         $payPeriodSelect.append($option);
+        $payPeriodSelect.find('option').each(function(){
+            var beginPeriod = new Date($(this).text().substring(0,10).replace(/-/g, '\/'));
+            var endPeriod = new Date($(this).text().substring(13).replace(/-/g, '\/'));
+
+            if(today > beginPeriod && today < endPeriod){
+                $(this).css({"background-color":"#337ab7","color":"white"}).attr("selected","selected");
+                endPeriod.setDate(endPeriod.getDate()+2);
+                dd = endPeriod.getDate();
+                mm = endPeriod.getMonth()+1;
+                yy = endPeriod.getFullYear();
+                $payDate.text(yy + '-' + mm + '-' + dd);
+                $payPeriodForm.submit();
+            }
+
+        });
     });
 
     $payPeriodForm.submit(function(event){
@@ -30,8 +48,6 @@ $(document).ready(function(){
         sessionStorage.setItem("payPeriod",payPeriod);
         sessionStorage.setItem("payPeriodID",payPeriodID);
         GetTechSaleByPeriod(payPeriodID);
-
-
     });
 
 
@@ -52,16 +68,6 @@ $(document).ready(function(){
         var techID = $(this).data("tech-id");
 
         $(function(){
-            /*
-            $.ajax({
-                type: 'get',
-                url: '../php/Script_GetPayReportByPeriod.php',
-                data:{payPeriod:payPeriod,techID:techID},
-                dataType: 'text'
-            }).done(function(response){
-                console.log(response);
-            });
-            */
             window.open('../php//Script_GetPayReportByPeriod.php?payPeriod=' + payPeriod + '&'+ 'techID=' + techID,'_blank');
         });
     });
@@ -189,7 +195,9 @@ $(document).ready(function(){
     }
     function GetTechSalePaymentModal(){
         var wage = JSON.parse(sessionStorage.getItem("techSale"));
+        var periodID = sessionStorage.getItem('payPeriodID');
         var payStatus = wage[0].sale.payStatus;
+        var techID = wage[0].techID;
 
 
         if(payStatus === 'Pending'){
@@ -197,11 +205,18 @@ $(document).ready(function(){
             $paymentMade.hide();
         }
         else if(payStatus === 'Paid'){
-            $paymentMade.show();
+            var $payment = '';
+            $.getJSON('../php/Script_PayDay_Functions.php',{action:"getPayment",periodID:periodID,techID:techID},function(response){
+                for(var i = 0; i < response.length; i++){
+                    $payment += ('<tr><td>' + response[i].paymentMethod + '</td>' +
+                        '<td>$ ' + response[i].paymentAmount + '</td><td> ' + response[i].paymentRef + '</td><tr>');
+
+                }
+                $paymentMade.find('.table tbody').append($payment).show();
+            });
             $paymentPending.hide();
             $makePaymentBtn.hide();
         }
-
     }
     function GetTechSaleByPeriod(payPeriodID){
         $.ajax({
@@ -233,6 +248,9 @@ $(document).ready(function(){
                 var payStatus = $(this).find('.label').html();
                 if(payStatus === 'Paid'){
                     $(this).find('.label').removeClass('label-default').addClass('label-success');
+                }
+                else if(payStatus === 'Pending'){
+                    $(this).find('.open-pay-report-btn').hide();
                 }
             });
         });

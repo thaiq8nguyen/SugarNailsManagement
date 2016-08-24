@@ -27,7 +27,7 @@ class Payday
     public function GetActivePayPeriod(){
         global $link;
         $period = "";
-        $query = "SELECT p.id, p.period,p.active FROM payperiod as p WHERE p.active = 1";
+        $query = "SELECT p.id, p.payDate,p.period,p.active FROM payperiod as p WHERE p.active = 1 ORDER BY payDate ASC";
         $result = mysqli_query($link,$query);
         if($result){
             while($row = mysqli_fetch_assoc($result)){
@@ -98,11 +98,11 @@ class Payday
 
         $period = "";
 
-        $query = "SELECT p.id, p.period,p.active FROM payperiod as p WHERE p.period = '". $payPeriod . "'";
+        $query = "SELECT p.id, p.payDate,p.period,p.active FROM payperiod as p WHERE p.period = '". $payPeriod . "'";
         $result = mysqli_query($link,$query);
         if($result){
             $row = mysqli_fetch_assoc($result);
-            $period = array("id" => $row["id"], "period" => $row["period"], "active" => $row["active"]);
+            $period = array("id" => $row["id"], "payDate" => $row["payDate"], "period" => $row["period"], "active" => $row["active"]);
 
         }
         return($period);
@@ -164,6 +164,7 @@ class Payday
             CAST((t.commissionRate * SUM(amount)) AS DECIMAL(6,2)) AS saleEarning,
             CAST((t.`tipRate` * SUM(tip)) AS DECIMAL(6,2)) AS tipEarning,
             CAST((t.commissionRate * SUM(amount) + t.`tipRate` * SUM(tip)) AS DECIMAL(6,2)) AS totalEarning,
+            (CAST((t.commissionRate * SUM(amount) + t.`tipRate` * SUM(tip)) AS DECIMAL(6,2)) + t.totalBalance) AS netWage,
             IF(s.payPeriodID is null,'Pending','Paid') As payStatus, t.totalBalance
             FROM technicians AS t INNER JOIN sales AS s 
             ON t.`technicianID` = s.techID WHERE s.techID = " . $techID .
@@ -178,7 +179,7 @@ class Payday
                     "grossSale" => $row['grossSale'], "grossTip" => $row['grossTip'],
                     "saleEarning" => $row['saleEarning'], "tipEarning" => $row['tipEarning'],
                     "totalEarning" => $row['totalEarning'], "payStatus" => $row['payStatus'],
-                    "totalBalance" => $row["totalBalance"]);
+                    "totalWage" => $row["netWage"]);
 
         }
         return $earning;
@@ -297,7 +298,27 @@ class Payday
         }
         return($response);
     }
+    public function GetPayment($periodID,$techID){
 
+        global $link;
+        $payment = "";
+        $query = "SELECT pm.method,pd.paymentAmount,pd.paymentRef FROM payments AS p INNER JOIN
+          paymentsdetail AS pd ON p.paymentID = pd.paymentID INNER JOIN
+          paymentmethods AS pm ON pd.paymentMethodID = pm.paymentMethodID 
+          WHERE p.payPeriodID = " . $periodID . " AND  p.techID = " .$techID;
+
+        $result = mysqli_query($link,$query);
+        if($result){
+            while($data = mysqli_fetch_assoc($result)){
+                $payment[] = array("paymentMethod" => $data["method"],"paymentAmount" => $data["paymentAmount"],
+                    "paymentRef" => $data["paymentRef"]);
+            }
+
+
+        }
+        return $payment;
+
+    }
     public function GetPayReport($payPeriod,$techID){
 
 
@@ -305,6 +326,9 @@ class Payday
         $this->GetTotalBalance($techID);
 
         $periodID = $data["id"];
+        $date = new DateTime($data["payDate"]);
+        $payDate = $date->format('Y-m-d');
+        $payPeriod = $data["period"];
 
         $saleData = $this->GetGrossSaleAndEarningByTechID($periodID,$techID);
         $techName = $saleData["technician"];
@@ -313,17 +337,19 @@ class Payday
         $saleWage = $saleData["saleEarning"];
         $tipWage = $saleData["tipEarning"];
         $balance = $this->balance;
-        $periodWage =  $saleWage + $tipWage;
-        $totalWage = $periodWage + $balance;
+        $periodWage = $saleData["totalEarning"];
+        $totalWage = $saleData["totalWage"];
 
 
         $wage = $this->GetDailySale($periodID,$techID);
-
+        $payment = $this->GetPayment($periodID,$techID);
 
         $report = new PayReport();
         $report->SetName($techName);
         $report->SetWage($wage);
-        $report->SetPayPeriod("2016-07-14 - 2016-07-28");
+        $report->SetPayment($payment);
+        $report->SetPayDate($payDate);
+        $report->SetPayPeriod($payPeriod);
         $report->SetWageMetric($grossSale,$grossTip,$saleWage,$tipWage,$periodWage,$totalWage,$balance);
         $report->PrintReport();
         $report->Output("",$techName);

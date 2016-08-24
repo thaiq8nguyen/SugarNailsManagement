@@ -17,7 +17,7 @@
 <?php include('../inc/header.php');?>
 <div class = "container top-buffer">
     <div class = "row">
-        <div class = "col-md-12">
+        <div class = "col-md-6">
             <form class = "form-inline" id = "pay-period-form" role = "form">
                 <div class = "form-group">
                     <label for = "pay-period-select">Pay Period:</label>
@@ -26,6 +26,9 @@
                 </div>
                 <button type = "submit" class = "btn btn-primary">Apply</button>
             </form>
+        </div>
+        <div class = "col-md-4">
+            <p>Pay Date: <span id = "paydate"></span></p>
         </div>
     </div>
     <div class = "row top-buffer">
@@ -98,8 +101,9 @@
                                     </div>
                                 </div>
                                 <div class = "panel panel-default payment-made"><div class = "panel-heading payment-panel-heading">Pay</div>
-                                    <div class = "panel-body payment-panel-body"><h3>Payments Made!</h3>
-                                        <p></p>
+                                    <div class = "panel-body payment-panel-body">
+                                        <table class = "table"><thead><tr><th>Method</th><th>Amount</th><th>Reference</th>
+                                            </tr></thead><tbody></tbody></table>
                                     </div>
                                 </div>
                             </div>

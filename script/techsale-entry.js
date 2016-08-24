@@ -1,11 +1,9 @@
 /**
  * Created by tnguyen on 3/25/2016.
  */
-$(document).ready(function(){
+$(function(){
     var $techList = $('#tech-list');
     var $saleEntryPanel = $('#sale-entry-panel');
-    var $formContainer = $('#form-container');
-    var $summaryContainer = $('#sale-summary');
     var $datepicker = $('#datepicker');
     var $previousDayBtn = $('#previous-day-btn');
     var $nextDayBtn = $('#next-day-btn');
@@ -26,41 +24,45 @@ $(document).ready(function(){
     }).on('change',function(){
         CreateTechList();
         UpdateTotalSaleAndTip();
-        $formContainer.hide();
-        $summaryContainer.hide();
+
     });
 
     $datepicker.datepicker('setDate', new Date());
 
     $previousDayBtn.click(function(){
-        var currentDate = $datepicker.val().replace(/-/g, '\/');
-        var previousDate = new Date(currentDate);
-
-        previousDate.setDate(previousDate.getDate()-1);
-
-        var dd = previousDate.getDate();
-        var mm = previousDate.getMonth()+1;
-        var yy = previousDate.getFullYear();
-
-        var aDate = yy + '-' + mm + '-' + dd;
-        $datepicker.datepicker('setDate', new Date(aDate));
-        $datepicker.change();
+        SetDate('previous');
     });
+
 
     $nextDayBtn.click(function(){
+        SetDate('next');
+    });
+
+    function SetDate(newDate){
         var currentDate = $datepicker.val().replace(/-/g, '\/');
-        var nextDate = new Date(currentDate);
+        var date = new Date(currentDate);
 
-        nextDate.setDate(nextDate.getDate()+1);
+        if(newDate === 'next'){
 
-        var dd = nextDate.getDate();
-        var mm = nextDate.getMonth()+1;
-        var yy = nextDate.getFullYear();
+            date.setDate(date.getDate()+1);
+        }
+        else if (newDate == 'previous'){
+
+            date.setDate(date.getDate()-1);
+
+        }
+        var dd = date.getDate();
+        var mm = date.getMonth()+1;
+        var yy = date.getFullYear();
 
         var aDate = yy + '-' + mm + '-' + dd;
         $datepicker.datepicker('setDate', new Date(aDate));
         $datepicker.change();
-    });
+
+        if($saleEntryPanel.is(':visible')){
+            $saleEntryPanel.hide();
+        }
+    }
 
     /*INITIALIZE
     ** -Technician List with sale data on the left hand size
@@ -192,15 +194,17 @@ $(document).ready(function(){
     }
     function UpdateTotalSaleAndTip(){
         var s =[];
-        $.ajax({
+
+        var totalSaleAndTip = $.ajax({
             type: 'get',
             url: '../php/Script_DailySale_Functions.php',
             data: {action: "getTotalSaleAndTip", saleDate: $datepicker.val()},
             dataType: 'json'
+        });
 
-        }).done(function(response){
-            if(response.status === 'success'){
-                $.each(response.sale,function(key,value){
+        $.when(totalSaleAndTip).done(function(response1){
+            if(response1.status === 'success'){
+                $.each(response1.sale,function(key,value){
                     s.push(value);
                 });
                 $.each($saleTableRow,function(index,row){
@@ -212,13 +216,12 @@ $(document).ready(function(){
                 $saleSummaryAlert.hide();
                 $saleSummaryTable.show();
             }
-            else if(response.status === 'failure'){
+            else if(response1.status === 'failure'){
                 $saleSummaryTable.hide();
-                $saleSummaryAlert.empty().append('<h3>' + response.message + '</h3>').show();
+                $saleSummaryAlert.empty().append('<h3>' + response1.message + '</h3>').show();
 
             }
-
-        });
+        })
     }
     function SaleEntryView(){
         var $saleInput = $('#sale-input');

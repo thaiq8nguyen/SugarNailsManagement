@@ -2,10 +2,13 @@
     margin-top: 20px;
 }
 #pay-period-select{
-    width:50%;
+    width:220px;
 }
 .btn{
     margin-right:5px !important;
+}
+#group-wage-container{
+    height:732px;
 }
 .single-container{
     width: 24%;

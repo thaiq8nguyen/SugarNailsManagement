@@ -27,6 +27,7 @@
             'Authorization' => 'Bearer ' . $accessToken,
             'Accept' => 'application/json',
             'Content-Type' => 'application/json'
+
         );
         /*
         $beginDate = "2016-08-01";//$_GET['saleDate'];
