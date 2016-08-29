@@ -55,14 +55,14 @@
                             <label for = "sale">Sale: ($)</label>
                             <div class = "input-group">
                                 <div class = "input-group-addon">$</div>
-                                <input type = "number" id = "sale-input" min = 1 max = 1000 class = "form-control" name = "sale">
+                                <input type = "number" id = "sale-input" min = "1" max = "1000" class = "form-control" name = "sale" required>
                             </div>
                         </div>
                         <div class = "form-group">
                             <label for = "cctip">Tip on Credit Card: ($)</label>
                             <div class = "input-group">
                                 <div class = "input-group-addon">$</div>
-                                <input type = "number" id = "tip-input" min = 1 max = 1000 class = "form-control" name = "tip">
+                                <input type = "number" id = "tip-input" min = "1" max = "1000" class = "form-control" name = "tip">
                             </div>
                         </div>
                         <button type = "button" id = "add-sale-btn" class = "btn btn-primary">Add</button>

@@ -18,7 +18,8 @@ $(function(){
         dataType:'json'
     }).done(function(response){
 
-        var  today = new Date();
+        var date = new Date();
+        var today = new Date(date.getFullYear()+'/'+(date.getMonth()+1)+'/'+date.getDate());
         var $option = '';
         for(var i = 0; i < response.length; i++){
             $option += '<option value = "' + response[i].id + '">' + response[i].period + '</option>';
@@ -28,7 +29,8 @@ $(function(){
             var beginPeriod = new Date($(this).text().substring(0,10).replace(/-/g, '\/'));
             var endPeriod = new Date($(this).text().substring(13).replace(/-/g, '\/'));
 
-            if(today > beginPeriod && today < endPeriod){
+
+            if(beginPeriod <= today && today <= endPeriod){
                 $(this).css({"background-color":"#337ab7","color":"white"}).attr("selected","selected");
                 endPeriod.setDate(endPeriod.getDate()+2);
                 dd = endPeriod.getDate();
@@ -36,6 +38,7 @@ $(function(){
                 yy = endPeriod.getFullYear();
                 $payDate.text(yy + '-' + mm + '-' + dd);
                 $payPeriodForm.submit();
+
             }
 
         });

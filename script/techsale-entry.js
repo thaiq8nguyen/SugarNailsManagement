@@ -86,59 +86,84 @@ $(function(){
         SaleEntryView();
     });
     $addSaleBtn.on('click',function() {
-        //EntryValidation();
-        var techID = sessionStorage.getItem('techID');
-        var data = $saleEntryForm.serializeArray();
-        data.push({name:"action",value: "setTechSale"},{name:"techID",value:techID},
-            {name:"saleDate",value:$datepicker.val()});
-        $.ajax({
-            type: 'post',
-            url: '../php/Script_DailySale_Functions.php',
-            data: data,
-            dataType: 'json'
-        }).done(function(response) {
-            if(response.status === 'success'){
+        if(EntryValidation()){
+            var techID = sessionStorage.getItem('techID');
+            var data = $saleEntryForm.serializeArray();
+            data.push({name:"action",value: "setTechSale"},{name:"techID",value:techID},
+                {name:"saleDate",value:$datepicker.val()});
+            $.ajax({
+                type: 'post',
+                url: '../php/Script_DailySale_Functions.php',
+                data: data,
+                dataType: 'json'
+            }).done(function(response) {
+                if(response.status === 'success'){
+                    $saleEntryAlert.removeClass();
+                    $saleEntryAlert.empty().
+                    append('<h3>Success!</h3><p>The sale has been recorded.</p>').addClass('alert alert-success').show();
+                    $addSaleBtn.hide();
+                    $updateSaleBtn.show();
+                    $deleteSaleBtn.show();
+                    sessionStorage.setItem("saleID",response.saleID);
+                    CreateTechList();
+                    UpdateTotalSaleAndTip();
+                }
+                else if(response.status === 'failure'){
+                    $saleEntryAlert.removeClass();
+                    $saleEntryAlert.empty().
+                    append('<h3>Failure!</h3><p>' + response.message + '</p>').addClass('alert alert-success').show();
+                }
 
-                $saleEntryAlert.empty().
-                append('<h3>Success!</h3><p>The sale has been recorded.</p>').addClass('alert alert-success').show();
-                $addSaleBtn.hide();
-                $updateSaleBtn.show();
-                $deleteSaleBtn.show();
-                sessionStorage.setItem("saleID",response.saleID);
-            }
-            CreateTechList();
-            UpdateTotalSaleAndTip();
 
-        });
+
+            });
+        }
+        else{
+            $saleEntryAlert.removeClass();
+            $saleEntryAlert.empty().
+            append('<h3>Failure!</h3><p>Sale or tip entry has an invalid value.</p>').addClass('alert alert-danger').show();
+        }
+
     });
 
     $updateSaleBtn.click(function(){
+        if(EntryValidation()){
+            var techID = sessionStorage.getItem('techID');
+            var saleID = sessionStorage.getItem('saleID');
+            var data = $saleEntryForm.serializeArray();
+            data.push({name:"action",value: "updateTechSale"},{name:"saleID",value:saleID},
+                {name:"saleDate",value:$datepicker.val()});
+            $.ajax({
+                type: 'post',
+                url: '../php/Script_DailySale_Functions.php',
+                data: data,
+                dataType: 'text'
+            }).done(function(response) {
+                if(response == 'success'){
+                    $saleEntryAlert.removeClass();
+                    $saleEntryAlert.empty().
+                    append('<h3>Success!</h3><p>The sale has been updated.</p>').addClass('alert alert-success').show();
+                    $addSaleBtn.hide();
+                    $updateSaleBtn.show();
+                    $deleteSaleBtn.show();
+                    CreateTechList();
+                    UpdateTotalSaleAndTip();
+                }
+                else if(response == 'failure'){
+                    $saleEntryAlert.removeClass();
+                    $saleEntryAlert.empty().
+                    append('<h3>Failure!</h3><p>' + response.message + '</p>').addClass('alert alert-success').show();
+                }
 
-        var techID = sessionStorage.getItem('techID');
-        var saleID = sessionStorage.getItem('saleID');
-        var data = $saleEntryForm.serializeArray();
-        data.push({name:"action",value: "updateTechSale"},{name:"saleID",value:saleID},
-            {name:"saleDate",value:$datepicker.val()});
-        $.ajax({
-            type: 'post',
-            url: '../php/Script_DailySale_Functions.php',
-            data: data,
-            dataType: 'text'
-        }).done(function(response) {
 
-            if(response === 'success'){
+            });
+        }
+        else{
+            $saleEntryAlert.removeClass();
+            $saleEntryAlert.empty().
+            append('<h3>Failure!</h3><p>Sale or tip entry has an invalid value.</p>').removeClass().addClass('alert alert-danger').show();
+        }
 
-                $saleEntryAlert.empty().
-                append('<h3>Success!</h3><p>The sale has been updated.</p>').addClass('alert alert-success').show();
-                $addSaleBtn.hide();
-                $updateSaleBtn.show();
-                $deleteSaleBtn.show();
-
-            }
-            CreateTechList();
-            UpdateTotalSaleAndTip();
-
-        });
     });
 
 
@@ -153,6 +178,7 @@ $(function(){
             dataType: 'text'
         }).done(function(response){
             if(response === 'success'){
+                $saleEntryAlert.removeClass();
                 $saleEntryAlert.empty().
                 append('<h3>Success!</h3><p>The sale has been <strong>deleted</strong>.</p>').addClass('alert alert-success').show();
                 $saleEntryForm[0].reset();
@@ -219,7 +245,6 @@ $(function(){
             else if(response1.status === 'failure'){
                 $saleSummaryTable.hide();
                 $saleSummaryAlert.empty().append('<h3>' + response1.message + '</h3>').show();
-
             }
         })
     }
@@ -275,20 +300,17 @@ $(function(){
             }
         });
 
-
-
-
     }
     function EntryValidation(){
-        var sale = $('#sale').val();
-        var cctip = $('#cctip').val();
+        var isValid = false;
+        var sale = $('#sale-input').val();
+        var tip = $('#tip-input').val();
 
-        if(sale == ''){
-            $('#sale-input').val('0.00');
+        if(sale > 0 && tip > 0){
+            isValid = true;
         }
-        if(cctip == ''){
-            $('#tip-input').val('0.00');
-        }
+
+        return isValid;
 
     }
 

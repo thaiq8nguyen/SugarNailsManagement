@@ -22,13 +22,25 @@ require ($base. '/php/Class.DailySale.php');
     elseif($_SERVER['REQUEST_METHOD'] === 'POST'){
         $action = $_POST['action'];
         if($action == "setTechSale"){
-            $sale = SetTechSale($_POST["techID"],$_POST{"sale"},$_POST["tip"],$_POST["saleDate"]);
-            echo json_encode($sale);
-
+            if($_POST["sale"] > 0 && $_POST["tip"] > 0){
+                $sale = SetTechSale($_POST["techID"],$_POST{"sale"},$_POST["tip"],$_POST["saleDate"]);
+                echo json_encode($sale);
+            }
+            else{
+                $failure = array("status" => "failure", "message" => "Invalid value");
+                echo json_encode($failure);
+            }
         }
         else if($action == "updateTechSale"){
-            $sale = UpdateTechSale($_POST["saleID"],$_POST["sale"],$_POST["tip"],$_POST["saleDate"]);
-            echo $sale;
+            if($_POST["sale"] > 0 && $_POST["tip"] > 0){
+                $sale = UpdateTechSale($_POST["saleID"],$_POST["sale"],$_POST["tip"],$_POST["saleDate"]);
+                echo $sale;
+            }
+            else{
+                $failure = array("status" => "failure", "message" => "Invalid value");
+                echo json_encode($failure);
+            }
+
         }
         else if($action == "deleteTechSale"){
             $sale = DeleteTechSale($_POST["saleDate"],$_POST["saleID"]);
